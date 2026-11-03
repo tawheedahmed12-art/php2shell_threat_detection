@@ -1,0 +1,49 @@
+title: PHP Worker Process Spawning Shell or Network Utility
+id: 4e8c1b70-39a2-4d51-b6c3-2f7a9e014d85
+status: experimental
+description: |
+  Detects a PHP web worker (php-fpm, mod_php under httpd/apache2, php-cgi) spawning a
+  shell, downloader or scripting interpreter. This is the post-exploitation step for
+  PHP2Shell (CVE-2026-109618 / CVE-2026-109619), the unauthenticated PHP RCE pair
+  reported as exploited in the wild from 21 October 2026, and for web shell activity
+  generally. It is deliberately independent of the exploit's request format, so it
+  still fires if the delivery method changes.
+references:
+  - https://watchtowr.com/intelligence/php-remote-code-execution-php2shell/
+author: Taw
+date: 2026-10-26
+tags:
+  - attack.execution
+  - attack.t1059.004
+  - attack.persistence
+  - attack.t1505.003
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_parent:
+    ParentImage|endswith:
+      - '/php-fpm'
+      - '/php-cgi'
+      - '/httpd'
+      - '/apache2'
+      - '/php'
+  selection_child:
+    Image|endswith:
+      - '/sh'
+      - '/bash'
+      - '/dash'
+      - '/zsh'
+      - '/nc'
+      - '/ncat'
+      - '/curl'
+      - '/wget'
+      - '/python3'
+      - '/perl'
+  filter_known_good:
+    CommandLine|contains:
+      - '/usr/local/bin/deploy-hook'
+  condition: all of selection_* and not filter_known_good
+falsepositives:
+  - Applications that legitimately shell out, such as image processing, PDF generation or mail delivery. Baseline these and add them to the filter.
+level: high

@@ -1,0 +1,30 @@
+title: PHP2Shell Exploitation Indicators in Multipart Upload Request
+id: 9b1d4f22-7c05-4a86-83e1-6d20c7fb4913
+status: experimental
+description: |
+  Detects request characteristics reported for PHP2Shell (CVE-2026-109619) exploitation:
+  a multipart/form-data POST carrying the PHP_SESSION_UPLOAD_PROGRESS field together with
+  repeated t[] array parameters used to groom the heap. Requires a WAF, reverse proxy or
+  gateway that logs request bodies or parameter names; standard access logs do not capture
+  POST bodies, so validate field availability before deploying.
+references:
+  - https://www.akamai.com/blog/security-research/understanding-php2shell-everything-you-need-to-know
+  - https://watchtowr.com/intelligence/php-remote-code-execution-php2shell/
+author: Taw
+date: 2026-10-26
+tags:
+  - attack.initial-access
+  - attack.t1190
+logsource:
+  category: webserver
+detection:
+  selection_method:
+    cs-method: 'POST'
+  selection_progress:
+    cs-body|contains: 'PHP_SESSION_UPLOAD_PROGRESS'
+  selection_spray:
+    cs-body|contains: 'name="t[]"'
+  condition: all of selection_*
+falsepositives:
+  - Legitimate applications that use the PHP session upload progress feature and also submit array parameters named t[]. Confirm against a baseline before enabling alerting.
+level: high
